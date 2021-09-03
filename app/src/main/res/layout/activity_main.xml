@@ -21,18 +21,18 @@
             android:id="@+id/patter_lock_view"
             android:layout_width="280dp"
             android:layout_height="280dp"
+            android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
             android:layout_marginBottom="48dp"
-            android:layout_alignParentBottom="true"
             app:aspectRatio="square"
             app:aspectRatioEnabled="true"
-            app:pathWidth="5dp"
-            app:normalStateColor="@android:color/holo_orange_dark"
-            app:wrongStateColor="@color/teal_200"
             app:correctStateColor="@color/teal_200"
             app:dotAnimationDuration="150"
             app:dotCount="3"
-            app:dotNormalSize="40dp" />
+            app:dotNormalSize="40dp"
+            app:normalStateColor="@android:color/holo_orange_dark"
+            app:pathWidth="5dp"
+            app:wrongStateColor="@color/teal_200" />
 
     </RelativeLayout>
 

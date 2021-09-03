@@ -8,17 +8,18 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Debug;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,15 +31,11 @@ import android.view.animation.Interpolator;
 import com.andrognito.patternlockview.listener.PatternLockViewListener;
 import com.andrognito.patternlockview.utils.PatternLockUtils;
 import com.andrognito.patternlockview.utils.ResourceUtils;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import static com.andrognito.patternlockview.PatternLockView.AspectRatio.ASPECT_RATIO_HEIGHT_BIAS;
 import static com.andrognito.patternlockview.PatternLockView.AspectRatio.ASPECT_RATIO_SQUARE;
@@ -50,8 +47,6 @@ import static com.andrognito.patternlockview.PatternLockView.PatternViewMode.WRO
 import androidx.annotation.ColorInt;
 import androidx.annotation.Dimension;
 import androidx.annotation.IntDef;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 /**
  * Displays a powerful, customizable and Material Design complaint pattern lock in the screen which
@@ -180,8 +175,8 @@ public class PatternLockView extends View {
     public PatternLockView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.halloween);
-        bitmap2 = BitmapFactory.decodeResource(getResources(), R.drawable.emoji);
+        bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.halloween_1);
+        bitmap2 = BitmapFactory.decodeResource(getResources(), R.drawable.halloween_2);
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.PatternLockView);
         try {
@@ -288,6 +283,8 @@ public class PatternLockView extends View {
         setMeasuredDimension(newWidth, newHeight);
     }
 
+    ArrayList<Dot> tmpDots = new ArrayList<>();
+
     @Override
     protected void onDraw(Canvas canvas) {
         ArrayList<Dot> pattern = mPattern;
@@ -331,6 +328,8 @@ public class PatternLockView extends View {
         Path currentPath = mCurrentPath;
         currentPath.rewind();
 
+        tmpDots.clear();
+
 //        // Draw the dots
         for (int i = 0; i < sDotCount; i++) {
             float centerY = getCenterYForRow(i);
@@ -354,6 +353,7 @@ public class PatternLockView extends View {
             float lastY = 0f;
             for (int i = 0; i < patternSize; i++) {
                 Dot dot = pattern.get(i);
+                tmpDots.add(dot);
 
                 // Only draw the part of the pattern stored in
                 // the lookup table (this is only different in case
@@ -378,10 +378,9 @@ public class PatternLockView extends View {
                     canvas.drawPath(currentPath, mPathPaint);
                 }
                 //
-                drawCircle2(canvas,centerX,centerY,mDotStates[dot.mRow][dot.mColumn].mSize,false,mDotStates[dot.mRow][dot.mColumn].mAlpha);
-                //
                 lastX = centerX;
                 lastY = centerY;
+                //
             }
 
             // Draw last in progress section
@@ -395,22 +394,16 @@ public class PatternLockView extends View {
                         mInProgressX, mInProgressY, lastX, lastY) * 255f));
                 canvas.drawPath(currentPath, mPathPaint);
                 //
-
             }
         }
 
-//        // Draw the dots
-//        for (int i = 0; i < sDotCount; i++) {
-//            float centerY = getCenterYForRow(i);
-//            for (int j = 0; j < sDotCount; j++) {
-//                DotState dotState = mDotStates[i][j];
-//                float centerX = getCenterXForColumn(j);
-//                float size = dotState.mSize * dotState.mScale;
-//                float translationY = dotState.mTranslateY;
-//                drawCircle(canvas, (int) centerX, (int) centerY + translationY,
-//                        size, drawLookupTable[i][j], dotState.mAlpha);
-//            }
-//        }
+        for (Dot dot : tmpDots) {
+            float centerX = getCenterXForColumn(dot.mColumn);
+            float centerY = getCenterYForRow(dot.mRow);
+            DotState state = mDotStates[dot.mRow][dot.mColumn];
+            drawCircle2(canvas, centerX, centerY,
+                    state.mSize, false, state.mAlpha);
+        }
     }
 
     @Override
@@ -1180,11 +1173,10 @@ public class PatternLockView extends View {
         Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, width, false);
         canvas.drawBitmap(scaledBitmap, centerX - width / 2, centerY - width / 2, null);
 
-
     }
 
     private void drawCircle2(Canvas canvas, float centerX, float centerY,
-                            float size, boolean partOfPattern, float alpha) {
+                             float size, boolean partOfPattern, float alpha) {
         //mDotPaint.setColor(getCurrentColor(partOfPattern));
 //        mDotPaint.setAlpha((int) (alpha * 255));
 //        canvas.drawCircle(centerX, centerY, size / 2, mDotPaint);
